@@ -18,8 +18,8 @@ public:
         key = _key;
         t = _t;
         level = _level;
-        nextnode = nullptr;
-        nextlevel = nullptr;
+        nextnode = NULL;
+        nextlevel = NULL;
     }
     IndexNode(){
         key = KEYTYPE();
@@ -49,12 +49,15 @@ private:
     VALUETYPE value;
 public:
     Basenode<KEYTYPE,VALUETYPE>* nextnode;
+    Basenode<KEYTYPE,VALUETYPE>* nextlevel;
     void insertnext(Basenode<KEYTYPE,VALUETYPE> * _nextnode){
         nextnode = _nextnode;
     }
     Basenode(KEYTYPE _key,VALUETYPE _value,TYPE _t):IndexNode<KEYTYPE>(_key,0,_t){
         // IndexNode<KEYTYPE>(_key,0,ELSE);
         value = _value;
+        nextnode = NULL;
+        nextlevel = NULL;
     }
     VALUETYPE & getvalue(){
         return value;
@@ -75,7 +78,7 @@ int compare(const IndexNode<KEYTYPE> &keynode,const KEYTYPE &k2){
     }
     else{
         KEYTYPE key = keynode.getkey();
-        if(key <= k2){
+        if(key < k2){
             return -1;
         }
         else if(key > k2){
@@ -93,7 +96,7 @@ int compare(const Basenode<KEYTYPE,VALUETYPE> &node,const KEYTYPE &_key){
     }
     else{
         KEYTYPE key = node.getkey();
-        if(key <= _key){
+        if(key < _key){
             return -1;
         }
         else{

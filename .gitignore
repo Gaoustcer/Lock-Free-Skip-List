@@ -1,3 +1,5 @@
 **/tutorialcmake
 **/.vscode
 **/skip-list
+**/data
+**/__pycache__
