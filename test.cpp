@@ -11,16 +11,15 @@ using namespace std;
 string filename = "./data/operations.txt";
 int main(){
     clock_t start,end;
-    // validate();
-    // SkipList<string,int> skiplist(32);
-    // start = clock();
-    // validate(skiplist,filename);
-    // end = clock();
-    // cout << "Time for 32 index " << end - start << endl;
+    SkipList<string,int> skiplist(32);
+    start = clock();
+    validate(skiplist,filename);
+    end = clock();
+    cout << "Time for 32 index " << end - start << endl;
     SkipList<string,int> ski(0);
     start = clock();
     validate(ski,filename);
     end = clock();
-    // cout << "Time for 0 index " << end - start << endl; 
+    cout << "Time for 0 index " << end - start << endl; 
     return 0;
 }

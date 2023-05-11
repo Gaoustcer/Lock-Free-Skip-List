@@ -35,7 +35,8 @@ def generatetestdata():
         operationdict.append(["F",s])
         result.append(value)
         savedict[s] = value
-    for _ in range(NUM_OPERATION):
+    from tqdm import tqdm
+    for _ in tqdm(range(NUM_OPERATION)):
         operation = random.choice(OPTIONS)
         if operation == "I":
             s = randstr()
@@ -60,8 +61,8 @@ if __name__ == "__main__":
     if os.path.exists(DATAPATH) == False:
         os.mkdir(DATAPATH)
     oper,res = generatetestdata()
-    print("operation",oper)
-    print("result",res)
+    # print("operation",oper)
+    # print("result",res)
     with open(f"{DATAPATH}/operations.txt","w") as fp:
         for operation in oper:
             s = ''

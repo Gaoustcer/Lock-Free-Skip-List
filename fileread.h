@@ -3,7 +3,7 @@
 #include <sstream>
 #include <string>
 #include "skiplist.h"
-#define VALIDATE 
+// #define VALIDATE 
 using namespace std;
 void validate(SkipList<string,int> &skiplist,string filename = "./data/operations.txt"){
     ifstream infile;
