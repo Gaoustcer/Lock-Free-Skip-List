@@ -52,27 +52,33 @@ public:
         // cout << "Basetail " << Basehead << endl;
         Basehead.nextnode = &Basetail;
         maxheight = _maxheight;
+        head.push_back((IndexNode<KEYTYPE> *)&Basehead);
+        tail.push_back((IndexNode<KEYTYPE> *)&Basetail);
         for(int i = 0;i < _maxheight;i++){
             head.push_back(new IndexNode<KEYTYPE>(KEYTYPE(),i + 1,HEAD));     
             tail.push_back(new IndexNode<KEYTYPE>(KEYTYPE(),i + 1,TAIL));
-            head[i]->nextnode = tail[i];
-            if(i){
-                head[i]->nextlevel = (IndexNode<KEYTYPE>*)head[i-1];
-                tail[i]->nextlevel = (IndexNode<KEYTYPE>*)tail[i-1];
-            }
-            else{// next level is Basehead and Base tail
-                head[i]->nextlevel = ((IndexNode<KEYTYPE>*)&Basehead);
-                tail[i]->nextlevel = ((IndexNode<KEYTYPE>*)&Basetail);
-            }
+            head[i + 1]->nextnode = tail[i + 1];
+            // set nextlevel and nextnode
+            head[i + 1]->nextlevel = (IndexNode<KEYTYPE> *)head[i];
+            tail[i + 1]->nextlevel = (IndexNode<KEYTYPE> *)tail[i];
+            // if(i){
+            //     head[i + 1]->nextlevel = (IndexNode<KEYTYPE>*)head[i-1];
+            //     tail[i]->nextlevel = (IndexNode<KEYTYPE>*)tail[i-1];
+            // }
+            // else{// next level is Basehead and Base tail
+            //     head[i]->nextlevel = ((IndexNode<KEYTYPE>*)&Basehead);
+            //     tail[i]->nextlevel = ((IndexNode<KEYTYPE>*)&Basetail);
+            // }
         }
+        
     }
     std::optional<VALUETYPE> search(KEYTYPE _key){
         return find(_key);
     }
     std::optional<VALUETYPE> find(KEYTYPE _key){
         // IndexNode<KEYTYPE> * ptr = 
-        IndexNode<KEYTYPE>* start = head[maxheight - 1];
-        IndexNode<KEYTYPE>* end = tail[maxheight - 1];
+        IndexNode<KEYTYPE>* start = head[maxheight];
+        IndexNode<KEYTYPE>* end = tail[maxheight];
         for(int i = maxheight - 1;i >= 0;i--){
             IndexNode<KEYTYPE>* _head = start;
             while (1)
@@ -91,6 +97,7 @@ public:
             }
         }
         // search until the last layer
+        
         Basenode<KEYTYPE,VALUETYPE> * _end = (Basenode<KEYTYPE,VALUETYPE>*)(end);
         Basenode<KEYTYPE,VALUETYPE> * base = (Basenode<KEYTYPE,VALUETYPE> *) (start);
         while(base->getkey() != _key){
@@ -106,8 +113,8 @@ public:
         std::optional<VALUETYPE> findresult = this->find(_key);
         if(findresult.has_value()){
             // delete process
-            IndexNode<KEYTYPE> * _start = head[maxheight - 1];
-            IndexNode<KEYTYPE> * _end = tail[maxheight - 1];
+            IndexNode<KEYTYPE> * _start = head[maxheight];
+            IndexNode<KEYTYPE> * _end = tail[maxheight];
             for(int i = maxheight - 1;i >= 0;i--){
                 IndexNode<KEYTYPE> * node = _start;
                 while(node != _end){
@@ -154,8 +161,8 @@ public:
             return ;
         }
         else{
-            IndexNode<KEYTYPE>* start = head[maxheight - 1];
-            IndexNode<KEYTYPE>* end = tail[maxheight - 1];
+            IndexNode<KEYTYPE>* start = head[maxheight];
+            IndexNode<KEYTYPE>* end = tail[maxheight];
             IndexNode<KEYTYPE>* tmp = NULL;
             for(int i = maxheight - 1;i >= 0;i--){
                 IndexNode<KEYTYPE>* _head = start;

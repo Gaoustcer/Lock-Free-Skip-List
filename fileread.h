@@ -3,6 +3,7 @@
 #include <sstream>
 #include <string>
 #include "skiplist.h"
+#define VALIDATE 
 using namespace std;
 void validate(SkipList<string,int> &skiplist,string filename = "./data/operations.txt"){
     ifstream infile;
@@ -29,12 +30,15 @@ void validate(SkipList<string,int> &skiplist,string filename = "./data/operation
         }
         else{
             auto ret = skiplist.search(opstr);
+            // #define VALIDATE
+            #ifdef VALIDATE
             if(ret.has_value()){
                 cout << ret.value() << endl;
             }
             else{
                 cout << -1 << endl;
             }
+            #endif
         }
         
         // cout << str << "op"<<endl;

@@ -5,19 +5,22 @@
 #include <string>
 #include <iostream>
 #include <iostream>
+#include <ctime>
+// #define VALIDATE
 using namespace std;
 string filename = "./data/operations.txt";
 int main(){
+    clock_t start,end;
     // validate();
-    SkipList<string,int> skiplist(3);
-    validate(skiplist,filename);
-    // cout << skiplist.depth() << endl;
-    // cout << skiplist.getlength() << endl;
-    // string str("hello");
-    // skiplist.insert(str,10);
-    // auto value = skiplist.find(str);
-    // cout << "find value "  << value.value() << " " << skiplist.getlength()  << endl;
-    // skiplist.deletekey(str);
-    // cout << skiplist.getlength() << endl;
+    // SkipList<string,int> skiplist(32);
+    // start = clock();
+    // validate(skiplist,filename);
+    // end = clock();
+    // cout << "Time for 32 index " << end - start << endl;
+    SkipList<string,int> ski(0);
+    start = clock();
+    validate(ski,filename);
+    end = clock();
+    // cout << "Time for 0 index " << end - start << endl; 
     return 0;
 }
