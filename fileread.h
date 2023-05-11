@@ -19,13 +19,13 @@ void validate(SkipList<string,int> &skiplist,string filename = "./data/operation
         // cout << s
         s>>op;
         s>>opstr;
-        cout << op <<"op " << opstr << endl;
+        // cout << op <<"op " << opstr << endl;
         if(op == "I"){
             string valuestr;
             s>>valuestr;
             value = stoi(valuestr);
             skiplist.insert(opstr,value);
-            cout << "length " << skiplist.getlength() << endl;
+            // cout << "length " << skiplist.getlength() << endl;
         }
         else{
             auto ret = skiplist.search(opstr);

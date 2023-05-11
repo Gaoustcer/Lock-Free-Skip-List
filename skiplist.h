@@ -95,7 +95,7 @@ public:
         Basenode<KEYTYPE,VALUETYPE> * base = (Basenode<KEYTYPE,VALUETYPE> *) (start);
         while(base->getkey() != _key){
             base = base -> nextnode;
-            if(base == _end){
+            if(_end->nextnode == base){
                 return std::nullopt;
             }
         }
@@ -148,7 +148,7 @@ public:
     }
     void insert(KEYTYPE _key,VALUETYPE _value){
         int _level = level(maxheight,rand());
-        cout << "Index level " << _level << endl;
+        // cout << "Index level " << _level << endl;
         std::optional<VALUETYPE> findresult = this->find(_key);
         if(findresult.has_value()){
             return ;

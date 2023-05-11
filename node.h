@@ -81,7 +81,7 @@ int compare(const IndexNode<KEYTYPE> &keynode,const KEYTYPE &k2){
         if(key < k2){
             return -1;
         }
-        else if(key > k2){
+        else{
             return 1;
         }
     }
