@@ -15,6 +15,7 @@ int main(){
     start = clock();
     validate(skiplist,filename);
     end = clock();
+    return 0;
     cout << "Time for 32 index " << end - start << endl;
     SkipList<string,int> ski(0);
     start = clock();

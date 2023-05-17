@@ -18,7 +18,7 @@ INITINSERT = 256
 
 NUM_OPERATION = 1024 * 32
 
-OPTIONS = ["I","F"]
+OPTIONS = ["I","F","D"]
 DATAPATH = "./data"
 def randstr(len = 10):
     rstr = ''.join(random.sample(string.ascii_letters + string.digits,len))
@@ -54,6 +54,11 @@ def generatetestdata():
                 s = randstr()
                 result.append(-1)
                 operationdict.append(["F",s])
+        elif operation == "D" and len(savedict.keys()):
+            s = random.choice(list(savedict.keys()))
+            del savedict[s]
+            operationdict.append(["D",s])
+
     return operationdict,result
 
 
