@@ -2,6 +2,8 @@ import random
 import string
 from random import randint
 from random import random as coin
+from random import choice
+from tqdm import tqdm
 import os
 '''
 do NUM_OPERATION operations
@@ -16,13 +18,49 @@ I insert F find
 MAXVALUE = 1024 * 32
 INITINSERT = 256
 
-NUM_OPERATION = 1024 * 32
+NUM_OPERATION = 1024 * 128 # number of insert/delete
 
 OPTIONS = ["I","F","D"]
 DATAPATH = "./data"
 def randstr(len = 10):
     rstr = ''.join(random.sample(string.ascii_letters + string.digits,len))
     return rstr
+
+keyvaluemap = dict()
+operation = []
+def constructskiplist():
+    for _ in tqdm(range(NUM_OPERATION)):
+        # op = choice(["I","D"])
+        if coin() < 0.8:
+            op = "I"
+            key = randstr()
+            value = randint(0,MAXVALUE)
+            keyvaluemap[key] = value
+            operation.append([op,key,value])
+        elif  len(list(keyvaluemap.keys())):
+            op = "D"
+            if coin() < 0.5:
+                key = choice(list(keyvaluemap.keys()))
+                del keyvaluemap[key]
+            else:
+                key = randstr()
+            operation.append([op,key])
+SEARCHTIME = NUM_OPERATION * 2
+result = []
+def search():
+    for _ in tqdm(range(SEARCHTIME)):
+        op = "F"
+        if coin() < 0.5:
+            key = choice(list(keyvaluemap.keys()))
+            value = keyvaluemap[key]
+            result.append([key,value])
+        else:
+            key = randstr()
+            value = -1
+            result.append([key,value])
+        operation.append([op,key])
+
+
 
 def generatetestdata():
     savedict = dict()
@@ -65,21 +103,26 @@ def generatetestdata():
 if __name__ == "__main__":
     if os.path.exists(DATAPATH) == False:
         os.mkdir(DATAPATH)
-    oper,res = generatetestdata()
+    # oper,res = generatetestdata()
     # print("operation",oper)
     # print("result",res)
+    constructskiplist()
+    search()
+    with open(f"{DATAPATH}/savedict.pkl",'wb') as fp:
+        import pickle 
+        pickle.dump(keyvaluemap,fp)
     with open(f"{DATAPATH}/operations.txt","w") as fp:
-        for operation in oper:
+        for op in operation:
             s = ''
-            for x in operation:
+            for x in op:
                 s += str(x) + " "
             # print(s)
             s += "\n"
             # s = s.encode()
             fp.write(s)
-    with open(f'{DATAPATH}/result.txt','w') as fp:
-        # fp.write(str(res))
-        for operation in res:
-            operation = str(operation) + "\n"
-            fp.write(operation)
+    # with open(f'{DATAPATH}/result.txt','w') as fp:
+    #     # fp.write(str(res))
+    #     for operation in res:
+    #         operation = str(operation) + "\n"
+    #         fp.write(operation)
     
