@@ -1,16 +1,18 @@
 // #include "node.h"
-#include "skiplist.h"
+#include "skiplist.hpp"
+#include "fileread.hpp"
 // #include "fileread.h"
-#include "config.h"
+// #include "config.h"
 #include <string>
 #include <iostream>
 #include <iostream>
 #include <ctime>
 // #define VALIDATE
+// void multiprocessvalidate(SkipList<string,int> &,string ,string);
 using namespace std;
 string filename = "./data/operations.txt";
 string outputfile = "./data/skiplist.log";
-void multiprocessvalidate(SkipList<string,int> &skiplist,string filename,string outputfile);
+// void multiprocessvalidate(SkipList<string,int> &skiplist,string filename,string outputfile);
 int main(){
     clock_t start,end;
     SkipList<string,int> skiplist(32);
@@ -18,8 +20,9 @@ int main(){
     // validate(skiplist,filename);
     multiprocessvalidate(skiplist,filename,outputfile);
     end = clock();
-    return 0;
+    // return 0;
     cout << "Time for 32 index " << end - start << endl;
+    return 0;
     SkipList<string,int> ski(0);
     start = clock();
     multiprocessvalidate(ski,filename,outputfile);

@@ -1,4 +1,4 @@
-#include "config.h"
+// #include "config.hpp"
 #include <vector>
 #include <optional>
 #include <cstdlib>
@@ -37,7 +37,7 @@ public:
     TYPE gettype() const{
         return t;
     }
-    friend std::ostream& operator<<(ostream &output,const IndexNode<KEYTYPE> & _indexnode){
+    friend std::ostream& operator<<(std::ostream &output,const IndexNode<KEYTYPE> & _indexnode){
         output << "key :" << _indexnode.getkey << " ";
     }
 
@@ -62,7 +62,7 @@ public:
     VALUETYPE & getvalue(){
         return value;
     }
-    friend std::ostream& operator <<(ostream &output,Basenode<KEYTYPE,VALUETYPE> & _basenode){
+    friend std::ostream& operator <<(std::ostream &output,Basenode<KEYTYPE,VALUETYPE> & _basenode){
         output << "key " << _basenode.getkey() << " value " << _basenode.getvalue() << " "; 
     }
     Basenode():IndexNode<KEYTYPE>(){}

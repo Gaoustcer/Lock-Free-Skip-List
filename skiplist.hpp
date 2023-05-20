@@ -1,8 +1,8 @@
 #ifndef SKIPLIST
 #define SKIPLIST
-#include "node.h"
-
-#include "config.h"
+#include "node.hpp"
+#include "config.hpp"
+// #include "config.h"
 
 template<typename KEYTYPE,typename VALUETYPE>
 class SkipList{
@@ -113,6 +113,8 @@ public:
         std::optional<VALUETYPE> findresult = this->find(_key);
         if(findresult.has_value()){
             // delete process
+            // cout << "delete key " << _key << endl;
+            // exit()
             IndexNode<KEYTYPE> * _start = head[maxheight];
             IndexNode<KEYTYPE> * _end = tail[maxheight];
             for(int i = maxheight - 1;i >= 0;i--){
@@ -154,7 +156,7 @@ public:
         return ;
     }
     void insert(KEYTYPE _key,VALUETYPE _value){
-        int _level = level(maxheight,rand());
+        int _level = getlevel(maxheight,rand());
         // cout << "Index level " << _level << endl;
         std::optional<VALUETYPE> findresult = this->find(_key);
         if(findresult.has_value()){
