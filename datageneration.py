@@ -45,7 +45,7 @@ def constructskiplist():
             else:
                 key = randstr()
             operation.append([op,key])
-SEARCHTIME = NUM_OPERATION * 2
+SEARCHTIME = NUM_OPERATION * 16
 result = []
 def search():
     for _ in tqdm(range(SEARCHTIME)):

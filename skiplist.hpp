@@ -1,9 +1,10 @@
 #ifndef SKIPLIST
 #define SKIPLIST
 #include "node.hpp"
+#include <mutex>
 #include "config.hpp"
 // #include "config.h"
-
+#define GLOBALLOCK
 template<typename KEYTYPE,typename VALUETYPE>
 class SkipList{
 private:
@@ -11,6 +12,9 @@ private:
     std::vector<IndexNode<KEYTYPE>*> tail;
     Basenode<KEYTYPE,VALUETYPE> Basehead{};
     Basenode<KEYTYPE,VALUETYPE> Basetail{};
+    #ifdef GLOBALLOCL
+    
+    #endif
     int maxheight = 0;
 public:
     friend std::ostream& operator<<(std::ostream &output,SkipList<KEYTYPE,VALUETYPE> &_skiplist){

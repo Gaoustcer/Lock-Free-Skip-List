@@ -7,8 +7,9 @@
 #include <ctime>
 #include "skiplist.hpp"
 #define VALIDATE 
+// #define LINEARSEARCH
 using namespace std;
-#define SEARCHPROCESS 2
+#define SEARCHPROCESS 1
 class operations{
 public:
     string searchkey;
