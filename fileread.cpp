@@ -1,23 +1,33 @@
 #include "fileread.hpp"
 #include <vector>
 #include <thread>
+#include <functional>
+#include <mutex>
 vector<operations> Search;
-
-void Searchworker(SkipList<string,int> &skiplist,
+SkipList<string,int> skiplist;
+// mutex mtx;
+void Searchworker(
     int id // id = 0,1,SEARCHPROCESS - 1
     )
 {
-    clock_t starttime = clock();
+    // clock_t starttime = clock();
     size_t count = 0;
-    for(int i = id;i < Search.size();i += SEARCHPROCESS){
+    size_t start = id * Search.size()/SEARCHPROCESS;
+    size_t end = (id + 1) * Search.size()/SEARCHPROCESS;
+    for(int i = start;i < end;i += 1){
+        // clock_t startsearch = clock();
+        // cout << "iteration " << i << endl;
         optional<int> findresult = skiplist.search(Search[i].searchkey);
+        // searchtime += clock() - startsearch;
         if(findresult.has_value()){
-            // std::cout << "find result " << findresult.value() << std::endl;
+            // std::cout << "find result " << findresult.value() << " " << i << std::endl;
             Search[i].value = findresult.value();
         }
+        // cout << "search " << i << endl;
         count += 1;
     }
-    cout << "time cost for thread " << id << " " << clock()  - starttime << " search count " << count << endl;
+    // clock_t searchtime = clock() - starttime;
+    // cout << "time cost for thread " << id << " " << clock()  - starttime << " search count " << count <<  " element per time " << searchtime/count << endl;
     // return clock() - starttime;
 }
 
@@ -30,7 +40,8 @@ clock_t linearsearch(SkipList<string,int> &skiplist,size_t numsearch){
     cout << "Search time for " << numsearch << " element " << " time cost is " << clock() - starttime << endl;
     return clock() - starttime;
 }
-void multiprocessvalidate(SkipList<string,int> &skiplist,string filename,string outputfile){
+void multiprocessvalidate(string filename,string outputfile){
+    cout << "Num of Thread " << SEARCHPROCESS << endl;
     vector<operations> Insert;
     ifstream infile;
     infile.open(filename,ios::in);
@@ -49,6 +60,7 @@ void multiprocessvalidate(SkipList<string,int> &skiplist,string filename,string 
             string valuestr;
             s >> valuestr;
             skiplist.insert(opstr,stoi(valuestr));
+            // cout << "insert an element " << endl;
         }
         else if (op == "D"){
             skiplist.deletekey(opstr);
@@ -67,8 +79,10 @@ void multiprocessvalidate(SkipList<string,int> &skiplist,string filename,string 
     #else
     vector<thread> Worker;
     clock_t startsearchtime = clock();
+    // size_t CREATEPROCESS = 1;
     for(int i = 0;i < SEARCHPROCESS;i++){
-        Worker.push_back(thread(Searchworker,std::ref(skiplist),i));
+        // auto f = std::bind(Searchworker,i);
+        Worker.push_back(thread(Searchworker,i));
     }
     for(int i = 0;i < SEARCHPROCESS;i++){
         Worker[i].join();
@@ -81,6 +95,7 @@ void multiprocessvalidate(SkipList<string,int> &skiplist,string filename,string 
         // if(result.value != -1)
             // cout << result.searchkey << " " << result.value << endl;
     }
+    skiplist.save();
     #endif
 }
 

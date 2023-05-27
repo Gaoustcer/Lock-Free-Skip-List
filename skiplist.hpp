@@ -2,9 +2,12 @@
 #define SKIPLIST
 #include "node.hpp"
 #include <mutex>
+#include <fstream>
+#include <ctime>
 #include "config.hpp"
 // #include "config.h"
 #define GLOBALLOCK
+// std::mutex mtx;
 template<typename KEYTYPE,typename VALUETYPE>
 class SkipList{
 private:
@@ -12,8 +15,9 @@ private:
     std::vector<IndexNode<KEYTYPE>*> tail;
     Basenode<KEYTYPE,VALUETYPE> Basehead{};
     Basenode<KEYTYPE,VALUETYPE> Basetail{};
-    #ifdef GLOBALLOCL
-    
+    vector<size_t> timecost;
+    #ifdef GLOBALLOCK
+    std::mutex mtx; 
     #endif
     int maxheight = 0;
 public:
@@ -49,10 +53,20 @@ public:
     int depth(){
         return maxheight;
     }
+    void save(){
+        ofstream fileout("./data/time.txt");
+        // fileout.open("./data/time.txt",ios::out);
+        cout << "time length " << timecost.size() << "\n";
+        for(auto &time:timecost){
+            fileout << time << endl;
+        }
+    }
     SkipList(int _maxheight = MAXHEIGHT){
         
         Basehead = Basenode<KEYTYPE,VALUETYPE>(KEYTYPE(),VALUETYPE(),HEAD);
         Basetail = Basenode<KEYTYPE,VALUETYPE>(KEYTYPE(),VALUETYPE(),TAIL);
+        Basehead.setfullylinked();
+        Basetail.setfullylinked();
         // cout << "Basetail " << Basehead << endl;
         Basehead.nextnode = &Basetail;
         maxheight = _maxheight;
@@ -62,6 +76,8 @@ public:
             head.push_back(new IndexNode<KEYTYPE>(KEYTYPE(),i + 1,HEAD));     
             tail.push_back(new IndexNode<KEYTYPE>(KEYTYPE(),i + 1,TAIL));
             head[i + 1]->nextnode = tail[i + 1];
+            head[i + 1]->setfullylinked();
+            tail[i + 1]->setfullylinked();
             // set nextlevel and nextnode
             head[i + 1]->nextlevel = (IndexNode<KEYTYPE> *)head[i];
             tail[i + 1]->nextlevel = (IndexNode<KEYTYPE> *)tail[i];
@@ -77,7 +93,18 @@ public:
         
     }
     std::optional<VALUETYPE> search(KEYTYPE _key){
-        return find(_key);
+        // mtx.lock();
+        // auto start = clock();
+        // auto result = find(_key);
+        // if(clock() - start > 2000)
+            // cout << "search cost for an element " << clock() - start  << " max range " << 2000 << endl;
+        // timecost.push_back(clock() - start);
+        // std::cout << " append timecost " << timecost.size() << "\n";
+        // mtx.unlock();
+        // mtx.lock();
+        auto result = this->find(_key);
+        // mtx.unlock();
+        return result;
     }
     std::optional<VALUETYPE> find(KEYTYPE _key){
         // IndexNode<KEYTYPE> * ptr = 
@@ -95,6 +122,9 @@ public:
                 }
                 else{
                     // _head = _head->nextnode;
+                    while(_head->nextnode->conditioncheck()){
+                        // not fully linked or is marked to be deleted
+                    }
                     _head = _head->nextnode;
                 }
                 /* code */
@@ -129,26 +159,36 @@ public:
                         _end = node->nextnode->nextlevel;
                         if(node->nextnode->getkey() == _key){
                             // while(node->nextlevel){
+                            node->lock();
                             IndexNode<KEYTYPE> * freenode = node->nextnode;
+                            freenode->setmarked();
+
                             node->nextnode = freenode->nextnode;
                             // node = node->nextlevel;
                             delete freenode;
+                            node->unlock();
                         }
                         break;
                     }
                     else{
+                        while(node->nextnode->conditioncheck()){
+
+                        }
                         node = node -> nextnode;
                     }
                 }
             }
             Basenode<KEYTYPE,VALUETYPE> * _basestart = (Basenode<KEYTYPE,VALUETYPE> *)_start;
             Basenode<KEYTYPE,VALUETYPE> * _baseend = (Basenode<KEYTYPE,VALUETYPE> *)_end;
-            auto node = _basestart;
+            Basenode<KEYTYPE,VALUETYPE> * node = _basestart;
             while(node != _baseend){
                 if(node->nextnode->getkey() == _key){
-                    auto tmp = node->nextnode;
+                    node->lock();
+                    Basenode<KEYTYPE,VALUETYPE> * tmp = node->nextnode;
                     node->nextnode = tmp->nextnode;
+                    tmp->setmarked();
                     delete tmp;
+                    node->unlock();
                     break;
                 }
                 node = node->nextnode;
@@ -181,17 +221,25 @@ public:
                         if(i < _level){
                             IndexNode<KEYTYPE> * Index = new IndexNode<KEYTYPE>(_key,i + 1);
                             // _head->nextnode = Index;
+                            _head->lock();
                             Index->nextnode = _head->nextnode;
                             _head->nextnode = Index;
+                            Index->setfullylinked();
                             if(tmp != NULL){
+                                tmp->lock();
                                 tmp->nextlevel = Index;
+                                tmp->unlock();
                             }
+                            _head->unlock();
                             tmp = Index;
                         }
                         break;
                     }
                     else{
                         // _head = _head->nextnode;
+                        while(_head->nextnode->conditioncheck()){
+
+                        }
                         _head = _head->nextnode;
                     }
                     /* code */
@@ -201,18 +249,30 @@ public:
             Basenode<KEYTYPE,VALUETYPE> * _start = (Basenode<KEYTYPE,VALUETYPE> *)(start);
             Basenode<KEYTYPE,VALUETYPE> * _end = (Basenode<KEYTYPE,VALUETYPE> *)(end);
             while(1){
+                while(_start->nextnode->conditioncheck()){
+
+                }
                 Basenode<KEYTYPE,VALUETYPE> * nextnode = _start -> nextnode;
                 if(compare(*_start,_key) * compare(*nextnode,_key) == -1){
+                    _start->lock();
                     Basenode<KEYTYPE,VALUETYPE> * id = new Basenode<KEYTYPE,VALUETYPE>(_key,_value,ELSE);
                     // _start -> nextnode = id;
                     // id -> nextnode = nextnode;
                     id->nextnode = _start->nextnode;
                     _start->nextnode = id;
-                    if(tmp)
+                    id->setfullylinked();
+                    if(tmp){
+                        tmp->lock();
                         tmp -> nextlevel = (IndexNode<KEYTYPE> *)(id);
+                        tmp->unlock();
+                    }
+                    _start->unlock();   
                     return ;
                 }
                 else{
+                    while(_start->nextnode->conditioncheck()){
+
+                    }
                     _start = _start->nextnode;
                 }
                 // _start = nextnode;

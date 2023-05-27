@@ -3,18 +3,55 @@
 #include <optional>
 #include <cstdlib>
 #include <iostream>
+#include <atomic>
+#include <mutex>
+using namespace std;
 enum TYPE{HEAD,TAIL,ELSE};
 template<typename KEYTYPE>
 class IndexNode{
 private:
     KEYTYPE key;
-    
+    mutex _mtx;
+    atomic<bool> _marked{false};
+    atomic<bool> _fullylinked{false};
+    // bool _marked;
+    // bool _fullylinked;
     TYPE t;
     int level;
 public:
     IndexNode * nextnode;
     IndexNode * nextlevel;
+    IndexNode& operator=(const IndexNode & index){
+        _marked = false;
+        _fullylinked = false;
+        key = index.key;
+        t = index.t;
+        level = index.level;
+    }
+    bool conditioncheck() const{
+        return (_marked == true) || (_fullylinked == false);
+    }
+    void lock(){
+        _mtx.lock();
+    }
+    void unlock(){
+        _mtx.unlock();
+    }
+    void setmarked(){
+        _marked = true;
+    }
+    void setfullylinked(){
+        _fullylinked = true;
+    }
+    bool marked(){
+        return bool(_marked);
+    }
+    bool fullylinked(){
+        return bool(_fullylinked);
+    }
     IndexNode(KEYTYPE _key,int _level,TYPE _t = ELSE){
+        _marked = {false};
+        _fullylinked = {false};
         key = _key;
         t = _t;
         level = _level;
@@ -26,6 +63,9 @@ public:
         level = 0;
     }
     KEYTYPE getkey() const{
+        while(this->conditioncheck()){
+            // wait until the node is finished
+        }
         return key;
     }
     void insertnext(IndexNode * _nextnode){
