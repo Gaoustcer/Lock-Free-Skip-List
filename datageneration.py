@@ -18,7 +18,7 @@ I insert F find
 MAXVALUE = 1024 * 32
 INITINSERT = 256
 
-NUM_OPERATION = 1024 * 128 # number of insert/delete
+NUM_OPERATION = 1024 * 32 # number of insert/delete
 
 OPTIONS = ["I","F","D"]
 DATAPATH = "./data"
@@ -29,23 +29,27 @@ def randstr(len = 10):
 keyvaluemap = dict()
 operation = []
 def constructskiplist():
+    localdict = dict()
+    localoperation = []
     for _ in tqdm(range(NUM_OPERATION)):
         # op = choice(["I","D"])
         if coin() < 0.8:
             op = "I"
             key = randstr()
             value = randint(0,MAXVALUE)
-            keyvaluemap[key] = value
-            operation.append([op,key,value])
-        elif  len(list(keyvaluemap.keys())):
+            # keyvaluemap[key] = value
+            localdict[key] = value
+            localoperation.append([op,key,value])
+        elif  len(list(localdict.keys())):
             op = "D"
             if coin() < 0.5:
-                key = choice(list(keyvaluemap.keys()))
-                del keyvaluemap[key]
+                key = choice(list(localdict.keys()))
+                del localdict[key]
             else:
                 key = randstr()
-            operation.append([op,key])
-SEARCHTIME = NUM_OPERATION * 16
+            localoperation.append([op,key])
+    return localdict,localoperation
+SEARCHTIME = NUM_OPERATION * 4
 result = []
 def search():
     for _ in tqdm(range(SEARCHTIME)):
@@ -99,20 +103,10 @@ def generatetestdata():
 
     return operationdict,result
 
-
-if __name__ == "__main__":
-    if os.path.exists(DATAPATH) == False:
-        os.mkdir(DATAPATH)
-    # oper,res = generatetestdata()
-    # print("operation",oper)
-    # print("result",res)
-    constructskiplist()
-    search()
-    with open(f"{DATAPATH}/savedict.pkl",'wb') as fp:
-        import pickle 
-        pickle.dump(keyvaluemap,fp)
-    with open(f"{DATAPATH}/operations.txt","w") as fp:
-        for op in operation:
+NUMOFPARALLEL = 4
+def outputoperation(filepath,operations):
+    with open(filepath,"w") as fp:
+        for op in operations:
             s = ''
             for x in op:
                 s += str(x) + " "
@@ -120,9 +114,28 @@ if __name__ == "__main__":
             s += "\n"
             # s = s.encode()
             fp.write(s)
-    # with open(f'{DATAPATH}/result.txt','w') as fp:
-    #     # fp.write(str(res))
-    #     for operation in res:
-    #         operation = str(operation) + "\n"
-    #         fp.write(operation)
+
+if __name__ == "__main__":
+    if os.path.exists(DATAPATH) == False:
+        os.mkdir(DATAPATH)
+    # oper,res = generatetestdata()
+    # print("operation",oper)
+    # print("result",res)
+    globaloperations = []
+    for i in range(NUMOFPARALLEL):
+        localdict,localoperation = constructskiplist()
+        # operation += localoperation
+        globaloperations += localoperation
+        keyvaluemap.update(localdict)
+        outputoperation(f"{DATAPATH}/modified_operation_{i}.txt",operations=localoperation)
+        print(len(localdict.keys()))
+    print("global keys",len(keyvaluemap.keys()))
+    search()
+    with open(f"{DATAPATH}/savedict.pkl",'wb') as fp:
+        import pickle 
+        pickle.dump(keyvaluemap,fp)
+    outputoperation(f"{DATAPATH}/searchoperations.txt",operations=operation)    
+    globaloperations += operation
+    outputoperation(f"{DATAPATH}/globaloperations.txt",operations=globaloperations)
+
     

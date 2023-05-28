@@ -3,6 +3,7 @@
 #include <thread>
 #include <functional>
 #include <mutex>
+
 vector<operations> Search;
 SkipList<string,int> skiplist;
 // mutex mtx;
@@ -40,8 +41,8 @@ clock_t linearsearch(SkipList<string,int> &skiplist,size_t numsearch){
     cout << "Search time for " << numsearch << " element " << " time cost is " << clock() - starttime << endl;
     return clock() - starttime;
 }
-void multiprocessvalidate(string filename,string outputfile){
-    cout << "Num of Thread " << SEARCHPROCESS << endl;
+
+void insertworker(string filename){
     vector<operations> Insert;
     ifstream infile;
     infile.open(filename,ios::in);
@@ -70,6 +71,58 @@ void multiprocessvalidate(string filename,string outputfile){
         }
     }
     Search = Insert;
+}
+
+void parallelinsert(vector<string> insertfilepath,string searchfilepath,string outputfile){
+    // insertfilepath store 4 independent insert sequence
+    // searchfilepath store all F instructions
+    // outputfile store find result;
+    
+    size_t parallelinsert = insertfilepath.size();
+    // vector<thread> searchthread;
+    #ifdef ONEINSERT
+    // thread T(insertworker,)
+    for(auto &filename:insertfilepath){
+        insertworker(filename);
+        // std::thread T(insertworker,filename);
+        // T.join();
+    }
+    #else
+    vector<thread> searchvec;
+    for(auto &filename:insertfilepath){
+        searchvec.push_back(thread(insertworker,filename));
+    }
+    for(int i = 0;i < parallelinsert;i++){
+        searchvec[i].join();
+    }
+    #endif
+    insertworker(searchfilepath);
+    vector<thread> Worker;
+    clock_t startsearchtime = clock();
+    // size_t CREATEPROCESS = 1;
+    for(int i = 0;i < SEARCHPROCESS;i++){
+        // auto f = std::bind(Searchworker,i);
+        Worker.push_back(thread(Searchworker,i));
+    }
+    for(int i = 0;i < SEARCHPROCESS;i++){
+        Worker[i].join();
+    }
+    cout << "total search time " << clock() - startsearchtime << endl;
+    ofstream file;
+    file.open(outputfile,ios::out);
+    for(auto & result:Search){
+        file << result.searchkey << " " << result.value << endl;
+        // if(result.value != -1)
+            // cout << result.searchkey << " " << result.value << endl;
+    }
+    // readsearch
+    
+}
+// void parallelinsert()
+
+void multiprocessvalidate(string filename,string outputfile){
+    cout << "Num of Thread " << SEARCHPROCESS << endl;
+    insertworker(filename);
     #ifdef LINEARSEARCH
     
     for(int i = 1;i <= 16;i++){

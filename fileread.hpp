@@ -7,6 +7,7 @@
 #include <ctime>
 #include "skiplist.hpp"
 #define VALIDATE 
+// #define NUMBEARINSERT 4
 // #define LINEARSEARCH
 using namespace std;
 // #define SEARCHPROCESS 16
@@ -17,5 +18,5 @@ public:
     operations(string _key,int _value):value(_value),searchkey(_key){}
 };
 void multiprocessvalidate(string filename,string outputfile);
-
+void parallelinsert(vector<string> insertfilepath,string searchfilepath,string outputfile);
 void validate(SkipList<string,int> &skiplist,string filename = "./data/operations.txt");
