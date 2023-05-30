@@ -18,10 +18,10 @@ I insert F find
 MAXVALUE = 1024 * 32
 INITINSERT = 256
 
-NUM_OPERATION = 1024 * 32 # number of insert/delete
+NUM_OPERATION = 128 # number of insert/delete
 
 OPTIONS = ["I","F","D"]
-DATAPATH = "./data"
+DATAPATH = "./data/simple"
 def randstr(len = 10):
     rstr = ''.join(random.sample(string.ascii_letters + string.digits,len))
     return rstr
@@ -49,7 +49,7 @@ def constructskiplist():
                 key = randstr()
             localoperation.append([op,key])
     return localdict,localoperation
-SEARCHTIME = NUM_OPERATION * 4
+SEARCHTIME = 128
 result = []
 def search():
     for _ in tqdm(range(SEARCHTIME)):

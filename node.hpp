@@ -19,17 +19,19 @@ private:
     TYPE t;
     int level;
 public:
-    IndexNode * nextnode;
-    IndexNode * nextlevel;
-    IndexNode& operator=(const IndexNode & index){
+    IndexNode * nextnode{nullptr};
+    IndexNode * nextlevel{nullptr};
+    IndexNode<KEYTYPE>& operator=(const IndexNode<KEYTYPE> & index){
         _marked = false;
         _fullylinked = false;
         key = index.key;
         t = index.t;
         level = index.level;
+        nextnode = (IndexNode<KEYTYPE> *)(index.nextnode);
+        nextlevel = (IndexNode<KEYTYPE> *)(index.nextlevel);
     }
     bool conditioncheck() const{
-        return (_marked == true) || (_fullylinked == false);
+        return (_marked == true) || (_fullylinked == false); // has been marked or not linked
     }
     void lock(){
         _mtx.lock();
@@ -63,9 +65,11 @@ public:
         level = 0;
     }
     KEYTYPE getkey() const{
+        #ifdef NODEMUTEX
         while(this->conditioncheck()){
             // wait until the node is finished
         }
+        #endif
         return key;
     }
     void insertnext(IndexNode * _nextnode){
@@ -90,6 +94,15 @@ private:
 public:
     Basenode<KEYTYPE,VALUETYPE>* nextnode;
     Basenode<KEYTYPE,VALUETYPE>* nextlevel;
+    // Basenode& operator=(const Basenode &copybasenode){
+    //     // _marked = false;
+    //     // _fullylinked = false;
+    //     // key = index.key;
+    //     // t = index.t;
+    //     // level = index.level;
+    //     nextnode = (Basenode<KEYTYPE,VALUETYPE> *)(copybasenode.nextnode);
+    //     nextlevel = (Basenode<KEYTYPE,VALUETYPE> *)(copybasenode.nextlevel);
+    // }
     void insertnext(Basenode<KEYTYPE,VALUETYPE> * _nextnode){
         nextnode = _nextnode;
     }

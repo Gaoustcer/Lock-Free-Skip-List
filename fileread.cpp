@@ -3,9 +3,10 @@
 #include <thread>
 #include <functional>
 #include <mutex>
-
+#include <atomic>
+atomic<int> opcount{0};
 vector<operations> Search;
-SkipList<string,int> skiplist;
+extern SkipList<string,int> skiplist;
 // mutex mtx;
 void Searchworker(
     int id // id = 0,1,SEARCHPROCESS - 1
@@ -53,6 +54,10 @@ void insertworker(string filename){
         char buffer[30];
         infile.getline(buffer,30);
         string s_str(buffer);
+        if(s_str.size() == 0){
+            break;
+        }
+        // cout << "str len " << s_str.size() << endl;
         istringstream s(s_str);
         s >> op;
         s >> opstr;
@@ -60,15 +65,20 @@ void insertworker(string filename){
         if(op == "I"){
             string valuestr;
             s >> valuestr;
+            // cout << "value " << valuestr << endl;
             skiplist.insert(opstr,stoi(valuestr));
             // cout << "insert an element " << endl;
         }
         else if (op == "D"){
+            // cout << "delete key " << opstr << endl;
             skiplist.deletekey(opstr);
         }
         else{
             Insert.push_back(operations(opstr,-1));
         }
+    
+        opcount.fetch_add(1);
+        // cout << "count " << opcount << endl;
     }
     Search = Insert;
 }
@@ -88,6 +98,7 @@ void parallelinsert(vector<string> insertfilepath,string searchfilepath,string o
         // T.join();
     }
     #else
+    // cout << "finish insert " << endl;
     vector<thread> searchvec;
     for(auto &filename:insertfilepath){
         searchvec.push_back(thread(insertworker,filename));
@@ -96,6 +107,7 @@ void parallelinsert(vector<string> insertfilepath,string searchfilepath,string o
         searchvec[i].join();
     }
     #endif
+    cout << "finish insert\n";
     insertworker(searchfilepath);
     vector<thread> Worker;
     clock_t startsearchtime = clock();

@@ -5,8 +5,9 @@
 #include <fstream>
 #include <ctime>
 #include "config.hpp"
+// #define LAYERLOCK
 // #include "config.h"
-#define GLOBALLOCK
+// #define GLOBALLOCK
 // std::mutex mtx;
 template<typename KEYTYPE,typename VALUETYPE>
 class SkipList{
@@ -16,6 +17,9 @@ private:
     Basenode<KEYTYPE,VALUETYPE> Basehead{};
     Basenode<KEYTYPE,VALUETYPE> Basetail{};
     vector<size_t> timecost;
+    #ifdef LAYERLOCK
+    std::mutex *mtxarray;
+    #endif
     #ifdef GLOBALLOCK
     std::mutex mtx; 
     #endif
@@ -62,7 +66,9 @@ public:
         }
     }
     SkipList(int _maxheight = MAXHEIGHT){
-        
+        #ifdef LAYERLOCK
+        mtxarray = new std::mutex[_maxheight + 1];
+        #endif
         Basehead = Basenode<KEYTYPE,VALUETYPE>(KEYTYPE(),VALUETYPE(),HEAD);
         Basetail = Basenode<KEYTYPE,VALUETYPE>(KEYTYPE(),VALUETYPE(),TAIL);
         Basehead.setfullylinked();
@@ -107,42 +113,70 @@ public:
         return result;
     }
     std::optional<VALUETYPE> find(KEYTYPE _key){
+        // mtx.lock();
         // IndexNode<KEYTYPE> * ptr = 
         IndexNode<KEYTYPE>* start = head[maxheight];
         IndexNode<KEYTYPE>* end = tail[maxheight];
         for(int i = maxheight - 1;i >= 0;i--){
+            #ifdef LAYERLOCK
+            mtxarray[i + 1].lock();
+            #endif
             IndexNode<KEYTYPE>* _head = start;
+            
             while (1)
             {
                 if(compare<KEYTYPE>(*_head,_key)  * compare<KEYTYPE>(*(_head->nextnode),_key) == -1){
                     // search in the next level
                     start = _head -> nextlevel;
                     end = _head -> nextnode -> nextlevel;
+                    // #ifdef LAYERLOCK
+                    // mtxarray[i + 1].unlock();
+                    // #endif
                     break;
                 }
                 else{
                     // _head = _head->nextnode;
+                    #ifdef NODEMUTEX
                     while(_head->nextnode->conditioncheck()){
                         // not fully linked or is marked to be deleted
                     }
+                    #endif
                     _head = _head->nextnode;
                 }
                 /* code */
             }
+            #ifdef LAYERLOCK
+            mtxarray[i + 1].unlock();
+            // cout << "unlock\n";
+            #endif
         }
         // search until the last layer
         
         Basenode<KEYTYPE,VALUETYPE> * _end = (Basenode<KEYTYPE,VALUETYPE>*)(end);
         Basenode<KEYTYPE,VALUETYPE> * base = (Basenode<KEYTYPE,VALUETYPE> *) (start);
+        #ifdef LAYERLOCK
+        mtxarray[0].lock();
+        #endif 
         while(base->getkey() != _key){
             base = base -> nextnode;
             if(_end->nextnode == base){
+                // mtx.unlock();
+                #ifdef LAYERLOCK
+                mtxarray[0].unlock();
+                #endif
                 return std::nullopt;
             }
         }
+        #ifdef LAYERLOCK
+        mtxarray[0].unlock();
+        #endif
+        // mtx.unlock();
         return base->getvalue();
     }
     void deletekey(KEYTYPE _key){
+        #ifdef GLOBALLOCK
+        mtx.lock();
+        #endif
         // delete a key-value pair based on its kay
         std::optional<VALUETYPE> findresult = this->find(_key);
         if(findresult.has_value()){
@@ -152,37 +186,56 @@ public:
             IndexNode<KEYTYPE> * _start = head[maxheight];
             IndexNode<KEYTYPE> * _end = tail[maxheight];
             for(int i = maxheight - 1;i >= 0;i--){
+                #ifdef LAYERLOCK
+                mtxarray[i + 1].lock();
+                #endif
                 IndexNode<KEYTYPE> * node = _start;
                 while(node != _end){
                     if(compare<KEYTYPE>(*node,_key) * compare<KEYTYPE>(*(node->nextnode),_key)==-1){
                         _start = node->nextlevel;
                         _end = node->nextnode->nextlevel;
                         if(node->nextnode->getkey() == _key){
+                            
                             // while(node->nextlevel){
-                            node->lock();
                             IndexNode<KEYTYPE> * freenode = node->nextnode;
+                            #ifdef NODEMUTEX
                             freenode->setmarked();
+                            node->lock();
+                            #endif
+                            // IndexNode<KEYTYPE> * freenode = node->nextnode;
+                            // freenode->setmarked();
 
                             node->nextnode = freenode->nextnode;
                             // node = node->nextlevel;
                             delete freenode;
+                            #ifdef NODEMUTEX
                             node->unlock();
+                            #endif
                         }
                         break;
                     }
                     else{
+                        #ifdef NODEMUTEX
                         while(node->nextnode->conditioncheck()){
 
                         }
+                        #endif
                         node = node -> nextnode;
                     }
                 }
+                #ifdef LAYERLOCK
+                mtxarray[i + 1].unlock();
+                #endif
             }
             Basenode<KEYTYPE,VALUETYPE> * _basestart = (Basenode<KEYTYPE,VALUETYPE> *)_start;
             Basenode<KEYTYPE,VALUETYPE> * _baseend = (Basenode<KEYTYPE,VALUETYPE> *)_end;
+            #ifdef LAYERLOCK
+            mtxarray[0].lock();
+            #endif
             Basenode<KEYTYPE,VALUETYPE> * node = _basestart;
             while(node != _baseend){
                 if(node->nextnode->getkey() == _key){
+                    
                     node->lock();
                     Basenode<KEYTYPE,VALUETYPE> * tmp = node->nextnode;
                     node->nextnode = tmp->nextnode;
@@ -193,17 +246,33 @@ public:
                 }
                 node = node->nextnode;
             }
+            #ifdef LAYERLOCK
+            mtxarray[0].unlock();
+            #endif
         }
         else{
+            #ifdef GLOBALLOCK
+            mtx.unlock();
+            #endif
             return ;
         }
+        #ifdef GLOBALLOCK
+        mtx.unlock();
+        #endif
         return ;
     }
     void insert(KEYTYPE _key,VALUETYPE _value){
+        #ifdef GLOBALLOCK
+        mtx.lock();
+        #endif
         int _level = getlevel(maxheight,rand());
         // cout << "Index level " << _level << endl;
         std::optional<VALUETYPE> findresult = this->find(_key);
+        // std::cout << "find result " << findresult.has_value() << endl;
         if(findresult.has_value()){
+            #ifdef GLOBALLOCK
+            mtx.unlock();
+            #endif
             return ;
         }
         else{
@@ -212,6 +281,10 @@ public:
             IndexNode<KEYTYPE>* tmp = NULL;
             for(int i = maxheight - 1;i >= 0;i--){
                 IndexNode<KEYTYPE>* _head = start;
+                #ifdef LAYERLOCK
+                mtxarray[i + 1].lock();
+                // cout << "lock for layer " << i + 1 << endl;
+                #endif
                 while (1)
                 {
                     if(compare<KEYTYPE>(*_head,_key) * compare<KEYTYPE>(*(_head->nextnode),_key) == -1){
@@ -219,6 +292,7 @@ public:
                         start = _head -> nextlevel;
                         end = _head -> nextnode -> nextlevel;
                         if(i < _level){
+                            
                             IndexNode<KEYTYPE> * Index = new IndexNode<KEYTYPE>(_key,i + 1);
                             // _head->nextnode = Index;
                             _head->lock();
@@ -232,6 +306,7 @@ public:
                             }
                             _head->unlock();
                             tmp = Index;
+                            
                         }
                         break;
                     }
@@ -244,6 +319,9 @@ public:
                     }
                     /* code */
                 }
+                #ifdef LAYERLOCK
+                mtxarray[i + 1].unlock();
+                #endif
             }
             // search in the last layer
             Basenode<KEYTYPE,VALUETYPE> * _start = (Basenode<KEYTYPE,VALUETYPE> *)(start);
@@ -254,6 +332,9 @@ public:
                 }
                 Basenode<KEYTYPE,VALUETYPE> * nextnode = _start -> nextnode;
                 if(compare(*_start,_key) * compare(*nextnode,_key) == -1){
+                    #ifdef LAYERLOCK
+                    mtxarray[0].lock();
+                    #endif
                     _start->lock();
                     Basenode<KEYTYPE,VALUETYPE> * id = new Basenode<KEYTYPE,VALUETYPE>(_key,_value,ELSE);
                     // _start -> nextnode = id;
@@ -266,7 +347,13 @@ public:
                         tmp -> nextlevel = (IndexNode<KEYTYPE> *)(id);
                         tmp->unlock();
                     }
-                    _start->unlock();   
+                    _start->unlock(); 
+                    #ifdef GLOBALLOCK  
+                    mtx.unlock();
+                    #endif
+                    #ifdef LAYERLOCK
+                    mtxarray[0].unlock();
+                    #endif
                     return ;
                 }
                 else{
